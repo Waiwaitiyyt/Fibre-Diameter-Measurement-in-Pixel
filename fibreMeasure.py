@@ -102,9 +102,6 @@ def _imgProcess(imgPath: str) -> np.ndarray:
 
 def measure(imgPath):
     cleanBinaryImg = _imgProcess(imgPath)
-    cv2.imshow("a", cleanBinaryImg)
-    cv2.waitKey(0)
-    cv2.destroyWindow("a")
     averageDiameter = np.mean(_distanceMeasure(cleanBinaryImg))
     return averageDiameter
 
@@ -118,3 +115,4 @@ if __name__ == "__main__":
     diameters_px = _distanceMeasure(cleanImg, min_area=500) 
     if diameters_px:
         print("mean (px):", np.mean(diameters_px))
+
