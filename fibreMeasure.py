@@ -1,11 +1,12 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage.morphology import skeletonize, reconstruction, remove_small_holes, remove_small_objects
-from skimage.draw import line
+from skimage.morphology import skeletonize
 from typing import Tuple
 from scipy.ndimage import distance_transform_edt
-
+from predict import predict_single_contour
+import torch
+from model import PointNetLike
 
 
 def _distanceMeasure(binary_mask: np.ndarray, min_area=50) -> list:
@@ -50,12 +51,6 @@ def _distanceMeasure(binary_mask: np.ndarray, min_area=50) -> list:
         widths = widths[idx]
     return widths.tolist()
 
-def _contourProperty(contour: np.ndarray) -> Tuple[int, int]:
-    area = cv2.contourArea(contour)
-    x, y, w, h = cv2.boundingRect(contour)
-    aspect = max(w, h) / (min(w, h) + 1e-6)
-    return area, aspect
-
 def _imgProcess(imgPath: str) -> np.ndarray:
     grayImg = cv2.imread(imgPath, cv2.IMREAD_GRAYSCALE)
     binary = cv2.threshold(cv2.bitwise_not(grayImg), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
@@ -82,37 +77,47 @@ def _imgProcess(imgPath: str) -> np.ndarray:
     cleanImg = cv2.bitwise_not(filterImg)
     # Here is a re-process for the binary image
     # Contours are extarcted to distinguish the unwanted hole and remove them
-    areaThreshold, aspectThreshold = 1e4, 2.1 # Obtained via some measurement of mine
-    cleanBinaryImg = cleanImg.copy()
+
+    imgCopy = cleanImg.copy()
     border_color = 255   
-    border_thickness = 1         
-    h, w = cleanImg.shape[:2]
-    cv2.line(cleanImg, (0, 0), (w, 0), border_color, border_thickness)
-    cv2.line(cleanImg, (0, h-1), (w, h-1), border_color, border_thickness)
-    cv2.line(cleanImg, (0, 0), (0, h), border_color, border_thickness)
-    cv2.line(cleanImg, (w-1, 0), (w-1, h), border_color, border_thickness)
-    contours, _ = cv2.findContours(cleanImg, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    border_thickness = 1  
+    h, w = imgCopy.shape[:2]
+    cv2.rectangle(imgCopy, (0, 0), (w - border_thickness - 1, h - 1 - border_thickness), border_color, border_thickness)
+    # cv2.line(cleanImg, (0, h - 1), (w - 1, h - 1), border_color, 2 * border_thickness)
+    contours, _ = cv2.findContours(imgCopy, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
     for i, contour in enumerate(contours):
-        area,aspect = _contourProperty(contour)
-        if area < areaThreshold and aspect > aspectThreshold:
-            cv2.drawContours(cleanBinaryImg, [contour], -1, 255, -1)
+        contour = contour.squeeze(1)
+        cls, conf = predict_single_contour(model, contour, DEVICE, NUM_POINTS)
+        if cls == 1:
+            cv2.drawContours(cleanImg, [contour], -1, 255, -1)
 
-    return cleanBinaryImg 
+    return cleanImg
+
+def setup():
+    global DEVICE, NUM_POINTS, model
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    MODEL_PATH = "pointnet_pore_classifier.pth" 
+    NUM_POINTS = 64
+    print(f"Device: {DEVICE}")
+    print("Loading model...")
+    model = PointNetLike(num_classes=2, num_points=NUM_POINTS)
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
+    model.to(DEVICE)
+    model.eval()
+    print("Model loaded successfully.")
 
 def measure(imgPath):
-    cleanBinaryImg = _imgProcess(imgPath)
-    averageDiameter = np.mean(_distanceMeasure(cleanBinaryImg))
-    return averageDiameter
+    cleanImg = _imgProcess(imgPath)
+    averageDiameter = np.mean(_distanceMeasure(cleanImg))
+    return averageDiameter, cleanImg
 
 
 if __name__ == "__main__":
     imgPath = r"images\\8.JPG"
-    cleanImg = _imgProcess(imgPath)  
-    cv2.imshow(imgPath, cleanImg)
+    setup()
+    averageDiameter, cleanImg = measure(imgPath)
+    cv2.imshow("a", cleanImg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    diameters_px = _distanceMeasure(cleanImg, min_area=500) 
-    if diameters_px:
-        print("mean (px):", np.mean(diameters_px))
-
+    print(averageDiameter)
