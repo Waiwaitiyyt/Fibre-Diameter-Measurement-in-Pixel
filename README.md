@@ -7,13 +7,11 @@
 ## Example
 <p> This is a binary mask for fibre thought preliminary image process. </p>
 
-![Binary fibre mask](Binary.jpg)
+![Binary fibre mask](binary.jpg)
 
 <p> The image shown below is returned by <code>measure()</code> API in <code>fibreMeasure</code>. The skeleton and measurement sites are labelled in blue and red respectively. </p>
 
 ![Labelled Image](demo.jpg)
-
-<p> It's noticeable that the measurement wasn't taken place at the two fibre fusing part. </p>
 
 ## Usage
 Move all files under the root path of your project, import `fibreMeausre` module via:
@@ -32,23 +30,9 @@ The default public API for fibreMeasure is `measure()`, it returns the average f
 
 This project is released under Apache 2.0 license
 
-## Requirements
-<ul>
-    <li> opencv-python
-    <li> numpy
-    <li> skimage
-    <li> scipy
-    <li> torch
-    <li> pandas
-    <li> sklearn
-    <li> tqdm
-    <li> matplotlib
-</ul>
-
 ## Other Notice
 
 Currently no error handling mechanism developed, so be careful to input the correct `imgPath` into the `measure()` function.
-
 
 
 
