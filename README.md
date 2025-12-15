@@ -13,6 +13,8 @@
 
 ![Labelled Image](demo.jpg)
 
+<p> It's noticeable that the measurement wasn't taken place at the two fibres fusing and intersecting part on the image above. </p>
+
 ## Usage
 Move all files under the root path of your project, import `fibreMeausre` module via:
 
@@ -33,6 +35,7 @@ This project is released under Apache 2.0 license
 ## Other Notice
 
 Currently no error handling mechanism developed, so be careful to input the correct `imgPath` into the `measure()` function.
+
 
 
 
