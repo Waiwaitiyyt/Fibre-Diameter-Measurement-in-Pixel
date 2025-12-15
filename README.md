@@ -7,7 +7,7 @@
 ## Example
 <p> This is a binary mask for fibre thought preliminary image process. </p>
 
-![Binary fibre mask](Binary.jpg)
+![Binary fibre mask](binary.jpg)
 
 <p> The image shown below is returned by <code>measure()</code> API in <code>fibreMeasure</code>. The skeleton and measurement sites are labelled in blue and red respectively. </p>
 
@@ -46,7 +46,6 @@ This project is released under Apache 2.0 license
 ## Other Notice
 
 Currently no error handling mechanism developed, so be careful to input the correct `imgPath` into the `measure()` function.
-
 
 
 
